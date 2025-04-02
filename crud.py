@@ -26,35 +26,47 @@ def create_table(conn):
     except sqlite3.Error as e:
         print("Error al crear la tabla:", e)
 
-def insert_student(conn, student):
+def insert_student(conn):
     """Inserta un nuevo estudiante en la tabla."""
+    name = input("Ingresa el nombre del estudiante: ")
+    age = int(input("Ingresa la edad del estudiante: "))
     sql = '''INSERT INTO students(name, age) VALUES(?,?)'''
     cur = conn.cursor()
-    cur.execute(sql, student)
+    cur.execute(sql, (name, age))
     conn.commit()
-    return cur.lastrowid
+    print(f"Estudiante {name} insertado con éxito.")
 
 def select_all_students(conn):
     """Consulta todos los registros de la tabla 'students'."""
     cur = conn.cursor()
     cur.execute("SELECT * FROM students")
     rows = cur.fetchall()
-    for row in rows:
-        print(row)
+    if rows:
+        print("Estudiantes en la base de datos:")
+        for row in rows:
+            print(row)
+    else:
+        print("No hay estudiantes en la base de datos.")
 
-def update_student(conn, student):
+def update_student(conn):
     """Actualiza los datos de un estudiante en la tabla."""
+    student_id = int(input("Ingresa el ID del estudiante a actualizar: "))
+    name = input("Ingresa el nuevo nombre del estudiante: ")
+    age = int(input("Ingresa la nueva edad del estudiante: "))
     sql = '''UPDATE students SET name = ?, age = ? WHERE id = ?'''
     cur = conn.cursor()
-    cur.execute(sql, student)
+    cur.execute(sql, (name, age, student_id))
     conn.commit()
+    print(f"Estudiante con ID {student_id} actualizado con éxito.")
 
-def delete_student(conn, student_id):
+def delete_student(conn):
     """Elimina un estudiante de la tabla según su ID."""
+    student_id = int(input("Ingresa el ID del estudiante a eliminar: "))
     sql = '''DELETE FROM students WHERE id = ?'''
     cur = conn.cursor()
     cur.execute(sql, (student_id,))
     conn.commit()
+    print(f"Estudiante con ID {student_id} eliminado con éxito.")
 
 def main():
     # Nombre de la base de datos (se creará en el directorio actual)
@@ -66,26 +78,30 @@ def main():
         # Crear la tabla si no existe
         create_table(conn)
 
-        # 1. Crear: Insertar un estudiante
-        student_id = insert_student(conn, ("Juan Pérez", 21))
-        print(f"Estudiante insertado con id {student_id}\n")
+        while True:
+            print("\nElige una opción:")
+            print("1. Insertar estudiante")
+            print("2. Ver estudiantes")
+            print("3. Actualizar estudiante")
+            print("4. Eliminar estudiante")
+            print("5. Salir")
 
-        # 2. Leer: Mostrar todos los estudiantes
-        print("Estudiantes después de la inserción:")
-        select_all_students(conn)
-        print()
+            opcion = input("Opción: ")
 
-        # 3. Actualizar: Modificar el estudiante insertado
-        update_student(conn, ("Juan Carlos Pérez", 22, student_id))
-        print("Estudiantes después de la actualización:")
-        select_all_students(conn)
-        print()
-
-        # 4. Borrar: Eliminar el estudiante
-        delete_student(conn, student_id)
-        print("Estudiantes después de la eliminación:")
-        select_all_students(conn)
-
+            if opcion == '1':
+                insert_student(conn)
+            elif opcion == '2':
+                select_all_students(conn)
+            elif opcion == '3':
+                update_student(conn)
+            elif opcion == '4':
+                delete_student(conn)
+            elif opcion == '5':
+                print("Saliendo del programa.")
+                break
+            else:
+                print("Opción no válida. Intenta de nuevo.")
+        
         conn.close()
     else:
         print("Error! No se pudo crear la conexión a la base de datos.")
