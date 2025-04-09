@@ -1,14 +1,20 @@
-import sqlite3
+import mysql.connector
 
-def create_connection(db_file):
-    """Crea una conexión a la base de datos SQLite especificada."""
-    conn = None
+def create_connection():
+    """Crea una conexión a la base de datos MySQL especificada."""
     try:
-        conn = sqlite3.connect(db_file)
-        print("Conexión exitosa a SQLite")
-    except sqlite3.Error as e:
-        print("Error al conectar:", e)
-    return conn
+        conn = mysql.connector.connect(
+            host="localhost",      # Ajusta según la configuración de tu servidor MySQL
+            user="chaker",         # Tu usuario de MySQL
+            password="M4rc!3l@g0", # Tu contraseña de MySQL
+            database="midatabase",  # Nombre de la base de datos
+            ssl_disabled=True
+        )
+        print("Conexión exitosa a MySQL")
+        return conn
+    except mysql.connector.Error as err:
+        print("Error al conectar:", err)
+        return None
 
 def create_tables(conn):
     """Crea las tablas 'students', 'materias', 'universidades' y 'student_materia' si no existen."""
@@ -16,26 +22,26 @@ def create_tables(conn):
         # Tabla estudiantes
         sql_create_students_table = '''
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            age INTEGER
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            age INT
         );
         '''
         
         # Tabla universidades
         sql_create_universities_table = '''
         CREATE TABLE IF NOT EXISTS universidades (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL
         );
         '''
         
         # Tabla materias
         sql_create_materias_table = '''
         CREATE TABLE IF NOT EXISTS materias (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            universidad_id INTEGER,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            universidad_id INT,
             FOREIGN KEY (universidad_id) REFERENCES universidades (id)
         );
         '''
@@ -43,8 +49,8 @@ def create_tables(conn):
         # Tabla de relación estudiantes-materias
         sql_create_student_materia_table = '''
         CREATE TABLE IF NOT EXISTS student_materia (
-            student_id INTEGER,
-            materia_id INTEGER,
+            student_id INT,
+            materia_id INT,
             FOREIGN KEY (student_id) REFERENCES students (id),
             FOREIGN KEY (materia_id) REFERENCES materias (id)
         );
@@ -56,14 +62,14 @@ def create_tables(conn):
         c.execute(sql_create_materias_table)
         c.execute(sql_create_student_materia_table)
         print("Tablas creadas o verificadas exitosamente.")
-    except sqlite3.Error as e:
-        print("Error al crear las tablas:", e)
+    except mysql.connector.Error as err:
+        print("Error al crear las tablas:", err)
 
 def insert_student(conn):
     """Inserta un nuevo estudiante en la tabla."""
     name = input("Ingresa el nombre del estudiante: ")
     age = int(input("Ingresa la edad del estudiante: "))
-    sql = '''INSERT INTO students(name, age) VALUES(?,?)'''
+    sql = '''INSERT INTO students(name, age) VALUES(%s, %s)'''
     cur = conn.cursor()
     cur.execute(sql, (name, age))
     conn.commit()
@@ -72,7 +78,7 @@ def insert_student(conn):
 def insert_university(conn):
     """Inserta una nueva universidad en la tabla."""
     nombre = input("Ingresa el nombre de la universidad: ")
-    sql = '''INSERT INTO universidades(nombre) VALUES(?)'''
+    sql = '''INSERT INTO universidades(nombre) VALUES(%s)'''
     cur = conn.cursor()
     cur.execute(sql, (nombre,))
     conn.commit()
@@ -82,7 +88,7 @@ def insert_materia(conn):
     """Inserta una nueva materia en la tabla."""
     nombre = input("Ingresa el nombre de la materia: ")
     university_id = int(input("Ingresa el ID de la universidad que ofrece esta materia: "))
-    sql = '''INSERT INTO materias(nombre, universidad_id) VALUES(?, ?)'''
+    sql = '''INSERT INTO materias(nombre, universidad_id) VALUES(%s, %s)'''
     cur = conn.cursor()
     cur.execute(sql, (nombre, university_id))
     conn.commit()
@@ -92,7 +98,7 @@ def assign_materia_to_student(conn):
     """Asigna una materia a un estudiante."""
     student_id = int(input("Ingresa el ID del estudiante: "))
     materia_id = int(input("Ingresa el ID de la materia: "))
-    sql = '''INSERT INTO student_materia(student_id, materia_id) VALUES(?, ?)'''
+    sql = '''INSERT INTO student_materia(student_id, materia_id) VALUES(%s, %s)'''
     cur = conn.cursor()
     cur.execute(sql, (student_id, materia_id))
     conn.commit()
@@ -138,12 +144,11 @@ def select_students_by_materia(conn):
     """Consulta los estudiantes inscritos en una materia específica."""
     materia_id = int(input("Ingresa el ID de la materia: "))
     
-    # Consulta para obtener los estudiantes inscritos en la materia
     sql = '''
     SELECT s.id, s.name
     FROM students s
     JOIN student_materia sm ON s.id = sm.student_id
-    WHERE sm.materia_id = ?
+    WHERE sm.materia_id = %s
     '''
     cur = conn.cursor()
     cur.execute(sql, (materia_id,))
@@ -156,7 +161,6 @@ def select_students_by_materia(conn):
     else:
         print(f"No hay estudiantes inscritos en la materia con ID {materia_id}.")
 
-
 def select_materias_by_university(conn):
     """Consulta las materias de una universidad específica."""
     university_id = int(input("Ingresa el ID de la universidad: "))
@@ -164,7 +168,7 @@ def select_materias_by_university(conn):
     sql = '''
     SELECT m.id, m.nombre
     FROM materias m
-    WHERE m.universidad_id = ?
+    WHERE m.universidad_id = %s
     '''
     cur = conn.cursor()
     cur.execute(sql, (university_id,))
@@ -182,7 +186,7 @@ def enroll_in_external_materia(conn):
     student_id = int(input("Ingresa el ID del estudiante: "))
     materia_id = int(input("Ingresa el ID de la materia de otra universidad: "))
     
-    sql = '''INSERT INTO student_materia(student_id, materia_id) VALUES(?, ?)'''
+    sql = '''INSERT INTO student_materia(student_id, materia_id) VALUES(%s, %s)'''
     cur = conn.cursor()
     cur.execute(sql, (student_id, materia_id))
     conn.commit()
@@ -196,7 +200,7 @@ def select_materias_by_student(conn):
     SELECT m.id, m.nombre
     FROM materias m
     JOIN student_materia sm ON m.id = sm.materia_id
-    WHERE sm.student_id = ?
+    WHERE sm.student_id = %s
     '''
     cur = conn.cursor()
     cur.execute(sql, (student_id,))
@@ -214,7 +218,7 @@ def update_student(conn):
     student_id = int(input("Ingresa el ID del estudiante a actualizar: "))
     name = input("Ingresa el nuevo nombre del estudiante: ")
     age = int(input("Ingresa la nueva edad del estudiante: "))
-    sql = '''UPDATE students SET name = ?, age = ? WHERE id = ?'''
+    sql = '''UPDATE students SET name = %s, age = %s WHERE id = %s'''
     cur = conn.cursor()
     cur.execute(sql, (name, age, student_id))
     conn.commit()
@@ -223,18 +227,15 @@ def update_student(conn):
 def delete_student(conn):
     """Elimina un estudiante de la tabla según su ID."""
     student_id = int(input("Ingresa el ID del estudiante a eliminar: "))
-    sql = '''DELETE FROM students WHERE id = ?'''
+    sql = '''DELETE FROM students WHERE id = %s'''
     cur = conn.cursor()
     cur.execute(sql, (student_id,))
     conn.commit()
     print(f"Estudiante con ID {student_id} eliminado con éxito.")
 
 def main():
-    # Nombre de la base de datos (se creará en el directorio actual)
-    database = "school.db"
-
-    # Crear conexión a la base de datos
-    conn = create_connection(database)
+    # Crear conexión a la base de datos MySQL
+    conn = create_connection()
     if conn is not None:
         # Crear las tablas si no existen
         create_tables(conn)
