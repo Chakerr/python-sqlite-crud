@@ -6,7 +6,7 @@ def create_connection():
         conn = mysql.connector.connect(
             host="localhost",      # Ajusta según la configuración de tu servidor MySQL
             user="chaker",         # Tu usuario de MySQL
-            password="M4rc!3l@g0", # Tu contraseña de MySQL
+            password="Qwerty123", # Tu contraseña de MySQL
             database="midatabase",  # Nombre de la base de datos
             ssl_disabled=True
         )
