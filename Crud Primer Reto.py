@@ -1,36 +1,42 @@
-import sqlite3
+import mysql.connector
 
-def create_connection(db_file):
-    """Crea una conexión a la base de datos SQLite especificada."""
-    conn = None
+def create_connection():
+    """Crea una conexión a la base de datos MySQL especificada."""
     try:
-        conn = sqlite3.connect(db_file)
-        print("Conexión exitosa a SQLite")
-    except sqlite3.Error as e:
-        print("Error al conectar:", e)
-    return conn
+        conn = mysql.connector.connect(
+            host="localhost",      # Ajusta según la configuración de tu servidor MySQL
+            user="chaker",         # Tu usuario de MySQL
+            password="M4rc!3l@g0", # Tu contraseña de MySQL
+            database="midatabase",  # Nombre de la base de datos
+            ssl_disabled=True
+        )
+        print("Conexión exitosa a MySQL")
+        return conn
+    except mysql.connector.Error as err:
+        print("Error al conectar:", err)
+        return None
 
 def create_table(conn):
-    """Crea la tabla 'students' si no existe."""
+    """Crea la tabla 'students' si no existe en la base de datos."""
     try:
         sql_create_table = '''
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            age INTEGER
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            age INT
         );
         '''
         c = conn.cursor()
         c.execute(sql_create_table)
         print("Tabla 'students' creada o verificada exitosamente.")
-    except sqlite3.Error as e:
-        print("Error al crear la tabla:", e)
+    except mysql.connector.Error as err:
+        print("Error al crear la tabla:", err)
 
 def insert_student(conn):
     """Inserta un nuevo estudiante en la tabla."""
     name = input("Ingresa el nombre del estudiante: ")
     age = int(input("Ingresa la edad del estudiante: "))
-    sql = '''INSERT INTO students(name, age) VALUES(?,?)'''
+    sql = '''INSERT INTO students (name, age) VALUES (%s, %s)'''
     cur = conn.cursor()
     cur.execute(sql, (name, age))
     conn.commit()
@@ -53,7 +59,7 @@ def update_student(conn):
     student_id = int(input("Ingresa el ID del estudiante a actualizar: "))
     name = input("Ingresa el nuevo nombre del estudiante: ")
     age = int(input("Ingresa la nueva edad del estudiante: "))
-    sql = '''UPDATE students SET name = ?, age = ? WHERE id = ?'''
+    sql = '''UPDATE students SET name = %s, age = %s WHERE id = %s'''
     cur = conn.cursor()
     cur.execute(sql, (name, age, student_id))
     conn.commit()
@@ -62,18 +68,15 @@ def update_student(conn):
 def delete_student(conn):
     """Elimina un estudiante de la tabla según su ID."""
     student_id = int(input("Ingresa el ID del estudiante a eliminar: "))
-    sql = '''DELETE FROM students WHERE id = ?'''
+    sql = '''DELETE FROM students WHERE id = %s'''
     cur = conn.cursor()
     cur.execute(sql, (student_id,))
     conn.commit()
     print(f"Estudiante con ID {student_id} eliminado con éxito.")
 
 def main():
-    # Nombre de la base de datos (se creará en el directorio actual)
-    database = "school.db"
-
-    # Crear conexión a la base de datos
-    conn = create_connection(database)
+    # Crear conexión a la base de datos MySQL
+    conn = create_connection()
     if conn is not None:
         # Crear la tabla si no existe
         create_table(conn)
