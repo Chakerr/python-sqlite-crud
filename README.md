@@ -22,3 +22,5 @@ La base de datos SQLite (`school.db`) se crea automáticamente al ejecutar cualq
 - `Crud Segundo Reto.py`: Mejoras en el manejo de registros, búsquedas y validaciones.
 - `Crud Tercer Reto.py`: Implementación avanzada de CRUD con múltiples registros, optimización de consultas y manejo de transacciones.
 - `school.db`: Archivo de base de datos SQLite (creado automáticamente al ejecutar los scripts).
+
+- 
